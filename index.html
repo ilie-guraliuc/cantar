@@ -32,8 +32,6 @@ html, body {
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
 }
-
-/* ── App shell ────────────────────────────────────────────────────────────── */
 .app {
   max-width: 520px;
   margin: 0 auto;
@@ -41,8 +39,6 @@ html, body {
   display: flex;
   flex-direction: column;
 }
-
-/* ── Header ───────────────────────────────────────────────────────────────── */
 .header {
   display: flex;
   align-items: center;
@@ -60,8 +56,6 @@ html, body {
 .dot.connected   { background: var(--green); box-shadow: 0 0 8px var(--green); }
 .dot.connecting  { background: var(--yellow); animation: pulse 1s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-/* ── Tab bar ──────────────────────────────────────────────────────────────── */
 .tab-bar {
   display: flex;
   background: var(--card);
@@ -84,12 +78,8 @@ html, body {
   transition: all .2s;
 }
 .tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
-
-/* ── Tab pages ────────────────────────────────────────────────────────────── */
 .tab-page { display: none; flex-direction: column; gap: var(--gap); padding: var(--gap); }
 .tab-page.active { display: flex; }
-
-/* ── Cards ────────────────────────────────────────────────────────────────── */
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -102,8 +92,6 @@ html, body {
   color: var(--muted);
   margin-bottom: 6px;
 }
-
-/* ── Weight ───────────────────────────────────────────────────────────────── */
 .weight-card {
   background: #000;
   border: 1px solid var(--border);
@@ -119,8 +107,6 @@ html, body {
   letter-spacing: -2px;
 }
 .weight-unit { font-size: 22px; color: var(--muted); margin-left: 4px; }
-
-/* ── Metrics grid ─────────────────────────────────────────────────────────── */
 .metrics {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -133,8 +119,6 @@ html, body {
   padding: 14px 16px;
 }
 .metric-val { font-size: 26px; font-weight: bold; color: var(--text); transition: color .3s; }
-
-/* ── Feet canvas ──────────────────────────────────────────────────────────── */
 .feet-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -150,8 +134,6 @@ html, body {
   margin-bottom: 8px;
 }
 #feetCanvas { display: block; width: 100%; height: auto; touch-action: none; }
-
-/* ── Score row ────────────────────────────────────────────────────────────── */
 .score-row {
   display: flex;
   align-items: center;
@@ -163,8 +145,6 @@ html, body {
 }
 .score-info .score-lbl { font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
 .score-info .score-txt { font-size: 14px; color: var(--text); line-height: 1.5; }
-
-/* ── Diagnostic list ──────────────────────────────────────────────────────── */
 .diag-list { display: flex; flex-direction: column; gap: 7px; }
 .diag-item {
   font-size: 13px;
@@ -176,8 +156,6 @@ html, body {
 .diag-item.ok   { background: #0d2010; color: #7dd88a; }
 .diag-item.warn { background: #2a1e00; color: #d29922; }
 .diag-item.bad  { background: #2a0d0d; color: #f85149; }
-
-/* ── Analysis section ─────────────────────────────────────────────────────── */
 .analysis-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -249,8 +227,6 @@ html, body {
   transition: all .2s;
 }
 .btn-export.ready { color: var(--blue); border-color: var(--blue); }
-
-/* ── History ──────────────────────────────────────────────────────────────── */
 .hist-empty { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 0; }
 .hist-item {
   background: var(--card);
@@ -266,15 +242,12 @@ html, body {
 .hist-score { font-size: 16px; font-weight: bold; font-family: 'Courier New', monospace; }
 .hist-summary { font-size: 12px; color: var(--text); line-height: 1.4; }
 .hist-meta { font-size: 11px; color: var(--muted); }
-
-/* ── Footer ───────────────────────────────────────────────────────────────── */
 .footer { text-align: center; font-size: 11px; color: var(--muted); padding: 12px; }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- Header -->
   <div class="header">
     <span class="header-title">CANTAR INTELIGENT</span>
     <div class="status-dot">
@@ -283,21 +256,17 @@ html, body {
     </div>
   </div>
 
-  <!-- Tab bar -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('live',this)">LIVE</button>
     <button class="tab-btn"       onclick="switchTab('hist',this)">ISTORIC</button>
   </div>
 
-  <!-- ── TAB LIVE ──────────────────────────────────────────────────────── -->
   <div class="tab-page active" id="tab-live">
 
-    <!-- Greutate -->
     <div class="weight-card">
       <div class="weight-num" id="weightVal">—<span class="weight-unit">kg</span></div>
     </div>
 
-    <!-- Metrici -->
     <div class="metrics">
       <div class="metric-card"><div class="card-label">PRESIUNE MAX</div><div class="metric-val" id="pmaxVal">—</div></div>
       <div class="metric-card"><div class="card-label">ASIMETRIE</div>  <div class="metric-val" id="asymVal">—</div></div>
@@ -305,13 +274,11 @@ html, body {
       <div class="metric-card"><div class="card-label">POSTURĂ</div>    <div class="metric-val" id="postVal">—</div></div>
     </div>
 
-    <!-- Tălpi -->
     <div class="feet-card">
       <div class="feet-labels"><span>PICIOR STÂNG</span><span>PICIOR DREPT</span></div>
       <canvas id="feetCanvas" width="460" height="280"></canvas>
     </div>
 
-    <!-- Scor -->
     <div class="score-row">
       <canvas id="scoreCanvas" width="86" height="86"></canvas>
       <div class="score-info">
@@ -320,7 +287,6 @@ html, body {
       </div>
     </div>
 
-    <!-- Diagnostic -->
     <div class="card">
       <div class="card-label">REZULTAT DIAGNOSTIC</div>
       <div class="diag-list" id="diagList">
@@ -328,7 +294,6 @@ html, body {
       </div>
     </div>
 
-    <!-- Analiză -->
     <div class="analysis-card">
       <div class="dur-row">
         <label>DURATĂ SESIUNE</label>
@@ -342,32 +307,35 @@ html, body {
     </div>
 
   </div>
-  <!-- ── END TAB LIVE ──────────────────────────────────────────────────── -->
 
-  <!-- ── TAB ISTORIC ───────────────────────────────────────────────────── -->
   <div class="tab-page" id="tab-hist">
     <div id="histList">
       <div class="hist-empty">Nu există sesiuni salvate.</div>
     </div>
   </div>
-  <!-- ── END TAB ISTORIC ───────────────────────────────────────────────── -->
+
 </div>
 
 <script>
-// ── MQTT ──────────────────────────────────────────────────────────────────────
 const BROKER    = 'wss://39286a92d684497a9b2997388614f284.s1.eu.hivemq.cloud:8884/mqtt';
 const TOPIC     = 'plantar/date';
 const MQTT_USER = 'esp32user';
 const MQTT_PASS = 'Bridge123';
 
-// ── Pozitii senzori (x,y normalizat) ─────────────────────────────────────────
+// ── Pozitii senzori — modifica aici valorile [x, y] intre 0.0 si 1.0
+// x: 0=stanga talpii, 1=dreapta talpii
+// y: 0=degete, 1=calcai
 const POS_L = [
-  [0.55,0.13],[0.40,0.21],[0.35,0.49],[0.55,0.37],
-  [0.38,0.60],[0.44,0.77],[0.60,0.81]
+  [0.55, 0.13],  // S0 — haluce
+  [0.40, 0.21],  // S1 — falange 2-3
+  [0.35, 0.49],  // S2 — arc medial
+  [0.55, 0.37],  // S3 — metatars I
+  [0.38, 0.60],  // S4 — arc medial 2
+  [0.44, 0.77],  // S5 — calcai interior
+  [0.60, 0.81],  // S6 — calcai exterior (ABSENT)
 ];
-const POS_R = POS_L.map(([x,y])=>[1-x,y]);
+// POS_R se calculeaza automat ca oglinda — nu modifica
 
-// ── Stare globala ─────────────────────────────────────────────────────────────
 let sensors     = new Array(14).fill(0);
 let weight      = 0;
 let analysisData= [];
@@ -377,11 +345,9 @@ let timerCount  = 0;
 let lastReport  = null;
 let history     = JSON.parse(localStorage.getItem('plantar_hist') || '[]');
 
-// ── Canvas ────────────────────────────────────────────────────────────────────
 const fCtx = document.getElementById('feetCanvas').getContext('2d');
 const sCtx = document.getElementById('scoreCanvas').getContext('2d');
 
-// ── Tab switch ────────────────────────────────────────────────────────────────
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -390,7 +356,6 @@ function switchTab(id, btn) {
   if (id === 'hist') renderHistory();
 }
 
-// ── Heatmap color ─────────────────────────────────────────────────────────────
 function heatColor(v) {
   v = Math.max(0, Math.min(1, v/255));
   if (v < 0.33) {
@@ -405,7 +370,6 @@ function heatColor(v) {
   }
 }
 
-// ── Forma talpa ───────────────────────────────────────────────────────────────
 const FOOT_PTS = [
   [0.35,0.08],[0.45,0.04],[0.55,0.04],[0.65,0.06],[0.70,0.10],
   [0.75,0.16],[0.78,0.24],[0.77,0.34],[0.74,0.44],[0.72,0.54],
@@ -413,17 +377,19 @@ const FOOT_PTS = [
   [0.38,0.94],[0.30,0.84],[0.27,0.74],[0.26,0.64],[0.24,0.54],
   [0.23,0.44],[0.22,0.34],[0.23,0.24],[0.26,0.16],[0.30,0.10],[0.35,0.08]
 ];
+
+// mirror=true oglindeste conturul talpii pe axa verticala
 function footPath(ctx, ox, oy, fw, fh, mirror) {
   ctx.beginPath();
   FOOT_PTS.forEach(([x,y],i)=>{
-    const px = mirror ? ox+fw-x*fw : ox+x*fw;
-    const py = oy+y*fh;
+    const px = mirror ? ox + fw - x*fw : ox + x*fw;
+    const py = oy + y*fh;
     i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
   });
   ctx.closePath();
 }
 
-// ── Disegna talpi ─────────────────────────────────────────────────────────────
+// ── drawFeet — stangul normal, dreptul oglindit ───────────────────────────────
 function drawFeet() {
   const cv = document.getElementById('feetCanvas');
   const W=cv.width, H=cv.height;
@@ -431,43 +397,65 @@ function drawFeet() {
   fCtx.fillStyle='#0b1a0e'; fCtx.fillRect(0,0,W,H);
   const pad=12, gap=20, fw=(W-2*pad-gap)/2, fh=H-2*pad;
 
-  [[0,false,sensors.slice(0,7),POS_L],[fw+gap,false,sensors.slice(7,14),POS_R]].forEach(([dox,_,vals,pos])=>{
-    const ox=pad+dox;
-    footPath(fCtx,ox,pad,fw,fh,false);
+  [
+    { ox: pad,        mirror: false, vals: sensors.slice(0,7)  },  // picior stang
+    { ox: pad+fw+gap, mirror: true,  vals: sensors.slice(7,14) }   // picior drept — oglindit
+  ].forEach(({ox, mirror, vals}) => {
+
+    // contur talpa
+    footPath(fCtx, ox, pad, fw, fh, mirror);
     fCtx.fillStyle='#0a1a0c'; fCtx.fill();
     fCtx.strokeStyle='#1e3a24'; fCtx.lineWidth=1; fCtx.stroke();
 
-    fCtx.save(); footPath(fCtx,ox,pad,fw,fh,false); fCtx.clip();
-    vals.forEach((val,i)=>{
-      if(val<3)return;
-      const [nx,ny]=pos[i], cx=ox+nx*fw, cy=pad+ny*fh, r=Math.min(fw,fh)*0.19;
-      const g=fCtx.createRadialGradient(cx,cy,0,cx,cy,r);
-      const col=heatColor(val), a=(180*Math.min(val/120,1))|0;
-      g.addColorStop(0,col+`,${a/255})`);
-      g.addColorStop(0.5,col+`,${a/510})`);
-      g.addColorStop(1,col+`,0)`);
-      fCtx.fillStyle=g; fCtx.beginPath(); fCtx.arc(cx,cy,r,0,Math.PI*2); fCtx.fill();
+    // heatmap — decupat in forma talpii
+    fCtx.save();
+    footPath(fCtx, ox, pad, fw, fh, mirror);
+    fCtx.clip();
+    vals.forEach((val, i) => {
+      if (val < 3) return;
+      const [nx, ny] = POS_L[i];
+      // oglindire pozitie senzor pentru piciorul drept
+      const cx = mirror ? ox + fw - nx*fw : ox + nx*fw;
+      const cy = pad + ny*fh;
+      const r  = Math.min(fw, fh) * 0.19;
+      const g  = fCtx.createRadialGradient(cx,cy,0, cx,cy,r);
+      const col = heatColor(val);
+      const a   = (180 * Math.min(val/120, 1)) | 0;
+      g.addColorStop(0,   col + `,${a/255})`);
+      g.addColorStop(0.5, col + `,${a/510})`);
+      g.addColorStop(1,   col + `,0)`);
+      fCtx.fillStyle = g;
+      fCtx.beginPath(); fCtx.arc(cx, cy, r, 0, Math.PI*2); fCtx.fill();
     });
     fCtx.restore();
 
-    fCtx.strokeStyle='#1e3a24'; fCtx.lineWidth=1; footPath(fCtx,ox,pad,fw,fh,false); fCtx.stroke();
+    // contur peste heatmap
+    footPath(fCtx, ox, pad, fw, fh, mirror);
+    fCtx.strokeStyle='#1e3a24'; fCtx.lineWidth=1; fCtx.stroke();
 
-    vals.forEach((val,i)=>{
-      const [nx,ny]=pos[i], cx=ox+nx*fw, cy=pad+ny*fh, t=Math.min(val/80,1);
-      fCtx.fillStyle   = t<0.05 ? 'rgba(160,160,160,.2)' : heatColor(val)+`,.${3+(6*t)|0})`;
-      fCtx.strokeStyle = t<0.05 ? 'rgba(200,200,200,.25)' : `rgba(255,255,255,${.2+.4*t})`;
-      fCtx.lineWidth=0.8;
-      fCtx.beginPath(); fCtx.arc(cx,cy,9,0,Math.PI*2); fCtx.fill(); fCtx.stroke();
+    // bulini senzori
+    vals.forEach((val, i) => {
+      const [nx, ny] = POS_L[i];
+      const cx = mirror ? ox + fw - nx*fw : ox + nx*fw;
+      const cy = pad + ny*fh;
+      const t  = Math.min(val/80, 1);
+      fCtx.fillStyle   = t < 0.05 ? 'rgba(160,160,160,.2)' : heatColor(val) + `,.${3+(6*t)|0})`;
+      fCtx.strokeStyle = t < 0.05 ? 'rgba(200,200,200,.25)' : `rgba(255,255,255,${.2+.4*t})`;
+      fCtx.lineWidth = 0.8;
+      fCtx.beginPath(); fCtx.arc(cx, cy, 9, 0, Math.PI*2);
+      fCtx.fill(); fCtx.stroke();
     });
   });
 
-  // separator
+  // linie separator
   fCtx.strokeStyle='rgba(30,58,36,.5)'; fCtx.setLineDash([4,4]); fCtx.lineWidth=1;
-  fCtx.beginPath(); fCtx.moveTo(pad+(fw+gap/2),pad); fCtx.lineTo(pad+(fw+gap/2),pad+fh); fCtx.stroke();
+  fCtx.beginPath();
+  fCtx.moveTo(pad + fw + gap/2, pad);
+  fCtx.lineTo(pad + fw + gap/2, pad+fh);
+  fCtx.stroke();
   fCtx.setLineDash([]);
 }
 
-// ── Disegna scor ──────────────────────────────────────────────────────────────
 function drawScore(s) {
   const W=86,H=86,cx=W/2,cy=H/2,r=34;
   sCtx.clearRect(0,0,W,H);
@@ -483,7 +471,6 @@ function drawScore(s) {
   sCtx.fillText(s,cx,cy);
 }
 
-// ── Diagnostic ────────────────────────────────────────────────────────────────
 function runDiagnostic(s) {
   const L=s.slice(0,7), R=s.slice(7,14);
   const lines=[]; let pen=0;
@@ -515,7 +502,6 @@ function runDiagnostic(s) {
     balance: (100-asym).toFixed(0)+'%'};
 }
 
-// ── Update UI ─────────────────────────────────────────────────────────────────
 function updateUI(w, s) {
   const wEl=document.getElementById('weightVal');
   wEl.innerHTML=(w>0?w.toFixed(1):'—')+'<span class="weight-unit">kg</span>';
@@ -542,7 +528,6 @@ function updateUI(w, s) {
   if(isAnalyzing) analysisData.push([...s]);
 }
 
-// ── Analiza ───────────────────────────────────────────────────────────────────
 function toggleAnalysis() {
   if(isAnalyzing) { stopAnalysis(); return; }
   startAnalysis();
@@ -564,7 +549,7 @@ function startAnalysis() {
     timerCount--;
     const pct = ((dur-timerCount)/dur*100).toFixed(1);
     document.getElementById('progFill').style.width = pct+'%';
-    document.getElementById('btnAnalyze').textContent = `⏹ STOP  ${timerCount}s`;
+    document.getElementById('btnAnalyze').textContent = `STOP  ${timerCount}s`;
     if(timerCount<=0) stopAnalysis();
   }, 1000);
 }
@@ -577,11 +562,10 @@ function stopAnalysis() {
 
   if(analysisData.length < 3) {
     document.getElementById('diagList').innerHTML =
-      '<div class="diag-item warn">⚠ Prea puține date colectate. Verificați conexiunea.</div>';
+      '<div class="diag-item warn">Eroare colectare date!</div>';
     return;
   }
 
-  // medie per senzor
   const avg = new Array(14).fill(0).map((_,i)=>
     analysisData.reduce((s,f)=>s+f[i],0)/analysisData.length);
 
@@ -594,7 +578,6 @@ function stopAnalysis() {
   const d = runDiagnostic(avg);
   drawScore(d.score);
 
-  // salveaza in istoric
   const entry = {
     date: new Date().toLocaleString('ro-RO'),
     weight: weight.toFixed(1),
@@ -615,7 +598,6 @@ function stopAnalysis() {
   document.getElementById('btnExport').classList.add('ready');
 }
 
-// ── Export TXT ────────────────────────────────────────────────────────────────
 function exportTxt() {
   if(!lastReport) return;
   const r = lastReport;
@@ -642,7 +624,6 @@ function exportTxt() {
   a.click();
 }
 
-// ── Istoric ───────────────────────────────────────────────────────────────────
 function renderHistory() {
   const el = document.getElementById('histList');
   if(!history.length) {
@@ -662,7 +643,6 @@ function renderHistory() {
   }).join('');
 }
 
-// ── MQTT ──────────────────────────────────────────────────────────────────────
 function setStatus(state) {
   const dot=document.getElementById('dot'), txt=document.getElementById('statusText');
   dot.className='dot '+state;
@@ -686,7 +666,6 @@ mqttClient.on('disconnect', ()=>setStatus('disconnected'));
 mqttClient.on('error',      ()=>setStatus('disconnected'));
 mqttClient.on('reconnect',  ()=>setStatus('connecting'));
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 drawFeet();
 drawScore(0);
 </script>
