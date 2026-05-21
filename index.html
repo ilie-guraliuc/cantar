@@ -2,219 +2,273 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Diagnostic Plantar</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.3.4/mqtt.min.js"></script>
 <style>
-  /* ── Reset & Base ─────────────────────────────────────────────────────── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0b1a0e;
+  --card:    #111f14;
+  --card2:   #162019;
+  --border:  #1e3a24;
+  --green:   #3fb950;
+  --accent:  #02c39a;
+  --yellow:  #d29922;
+  --red:     #f85149;
+  --blue:    #58a6ff;
+  --text:    #d4e8d0;
+  --muted:   #6a9a72;
+  --r:       14px;
+  --gap:     14px;
+  font-size: 16px;
+}
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
 
-  :root {
-    --bg:        #0b1a0e;
-    --card:      #111f14;
-    --card2:     #162019;
-    --border:    #1e3a24;
-    --green:     #3fb950;
-    --teal:      #028090;
-    --accent:    #02c39a;
-    --yellow:    #d29922;
-    --red:       #f85149;
-    --blue:      #58a6ff;
-    --text:      #d4e8d0;
-    --muted:     #6a9a72;
-    --radius:    12px;
-    --gap:       12px;
-  }
+/* ── App shell ────────────────────────────────────────────────────────────── */
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 0 80px 0;
+  display: flex;
+  flex-direction: column;
+}
 
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 14px;
-    overflow-x: hidden;
-  }
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-title { font-size: 13px; letter-spacing: 2px; color: var(--accent); font-weight: bold; }
+.status-dot   { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.dot          { width: 10px; height: 10px; border-radius: 50%; background: var(--red); transition: background .4s; }
+.dot.connected   { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.dot.connecting  { background: var(--yellow); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-  /* ── Layout ───────────────────────────────────────────────────────────── */
-  .app {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap);
-  }
+/* ── Tab bar ──────────────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 49px;
+  z-index: 99;
+}
+.tab-btn {
+  flex: 1;
+  padding: 14px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all .2s;
+}
+.tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
 
-  /* ── Header ───────────────────────────────────────────────────────────── */
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-  .header-title {
-    font-size: 12px;
-    letter-spacing: 2px;
-    color: var(--accent);
-    font-weight: bold;
-  }
-  .status-dot {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--muted);
-  }
-  .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--red);
-    transition: background 0.4s;
-  }
-  .dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
-  .dot.connecting { background: var(--yellow); animation: pulse 1s infinite; }
+/* ── Tab pages ────────────────────────────────────────────────────────────── */
+.tab-page { display: none; flex-direction: column; gap: var(--gap); padding: var(--gap); }
+.tab-page.active { display: flex; }
 
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.card-label {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
 
-  /* ── Weight card ──────────────────────────────────────────────────────── */
-  .weight-card {
-    background: #000;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    text-align: center;
-  }
-  .weight-label {
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-  .weight-value {
-    font-size: 56px;
-    font-weight: bold;
-    color: var(--green);
-    line-height: 1;
-    letter-spacing: -2px;
-    transition: color 0.3s;
-  }
-  .weight-unit {
-    font-size: 18px;
-    color: var(--muted);
-    margin-left: 4px;
-  }
+/* ── Weight ───────────────────────────────────────────────────────────────── */
+.weight-card {
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  text-align: center;
+}
+.weight-num {
+  font-size: 64px;
+  font-weight: bold;
+  color: var(--green);
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.weight-unit { font-size: 22px; color: var(--muted); margin-left: 4px; }
 
-  /* ── Metrics row ──────────────────────────────────────────────────────── */
-  .metrics {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gap);
-  }
-  .metric-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-  }
-  .metric-label {
-    font-size: 9px;
-    letter-spacing: 2px;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-  .metric-value {
-    font-size: 22px;
-    font-weight: bold;
-    color: var(--text);
-    transition: color 0.3s;
-  }
+/* ── Metrics grid ─────────────────────────────────────────────────────────── */
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+.metric-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+}
+.metric-val { font-size: 26px; font-weight: bold; color: var(--text); transition: color .3s; }
 
-  /* ── Foot canvas ──────────────────────────────────────────────────────── */
-  .feet-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px;
-  }
-  .feet-label-row {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 6px;
-    font-size: 9px;
-    letter-spacing: 2px;
-    color: var(--muted);
-  }
-  #feetCanvas {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
+/* ── Feet canvas ──────────────────────────────────────────────────────────── */
+.feet-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px;
+}
+.feet-labels {
+  display: flex;
+  justify-content: space-around;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+#feetCanvas { display: block; width: 100%; height: auto; touch-action: none; }
 
-  /* ── Diagnostic ───────────────────────────────────────────────────────── */
-  .diag-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-  }
-  .diag-title {
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: var(--accent);
-    margin-bottom: 10px;
-  }
-  .diag-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .diag-item {
-    font-size: 12px;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: var(--card2);
-    color: var(--text);
-    line-height: 1.4;
-    transition: background 0.3s;
-  }
-  .diag-item.ok   { background: #0d2010; color: #7dd88a; }
-  .diag-item.warn { background: #2a1e00; color: #d29922; }
-  .diag-item.bad  { background: #2a0d0d; color: #f85149; }
+/* ── Score row ────────────────────────────────────────────────────────────── */
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.score-info .score-lbl { font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+.score-info .score-txt { font-size: 14px; color: var(--text); line-height: 1.5; }
 
-  /* ── Score ring ───────────────────────────────────────────────────────── */
-  .score-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-  #scoreCanvas { flex-shrink: 0; }
-  .score-info { flex: 1; }
-  .score-label {
-    font-size: 9px;
-    letter-spacing: 2px;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-  .score-text {
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.5;
-  }
+/* ── Diagnostic list ──────────────────────────────────────────────────────── */
+.diag-list { display: flex; flex-direction: column; gap: 7px; }
+.diag-item {
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--card2);
+  line-height: 1.4;
+}
+.diag-item.ok   { background: #0d2010; color: #7dd88a; }
+.diag-item.warn { background: #2a1e00; color: #d29922; }
+.diag-item.bad  { background: #2a0d0d; color: #f85149; }
 
-  /* ── Footer ───────────────────────────────────────────────────────────── */
-  .footer {
-    text-align: center;
-    font-size: 10px;
-    color: var(--muted);
-    padding: 8px;
-  }
+/* ── Analysis section ─────────────────────────────────────────────────────── */
+.analysis-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dur-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dur-row label { font-size: 12px; color: var(--muted); letter-spacing: 1px; }
+.dur-input {
+  background: var(--card2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  width: 110px;
+  text-align: center;
+}
+.dur-input:focus { outline: none; border-color: var(--green); }
+.progress-bg {
+  height: 7px;
+  background: var(--card2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 4px;
+  width: 0%;
+  transition: width .9s linear;
+}
+.btn-row { display: flex; gap: 10px; }
+.btn-analyze {
+  flex: 3;
+  padding: 16px;
+  background: #238636;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background .2s;
+  letter-spacing: 1px;
+}
+.btn-analyze:active { background: #2ea043; }
+.btn-analyze:disabled { background: #1a2d21; color: var(--muted); cursor: default; }
+.btn-export {
+  flex: 2;
+  padding: 16px;
+  background: var(--card2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-export.ready { color: var(--blue); border-color: var(--blue); }
+
+/* ── History ──────────────────────────────────────────────────────────────── */
+.hist-empty { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 0; }
+.hist-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hist-top { display: flex; align-items: center; justify-content: space-between; }
+.hist-date { font-size: 14px; font-weight: bold; color: var(--text); }
+.hist-score { font-size: 16px; font-weight: bold; font-family: 'Courier New', monospace; }
+.hist-summary { font-size: 12px; color: var(--text); line-height: 1.4; }
+.hist-meta { font-size: 11px; color: var(--muted); }
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.footer { text-align: center; font-size: 11px; color: var(--muted); padding: 12px; }
 </style>
 </head>
 <body>
@@ -229,355 +283,415 @@
     </div>
   </div>
 
-  <!-- Greutate -->
-  <div class="weight-card">
-    <div class="weight-label">GREUTATE CORPORALĂ</div>
-    <div class="weight-value" id="weightVal">—<span class="weight-unit">kg</span></div>
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('live',this)">LIVE</button>
+    <button class="tab-btn"       onclick="switchTab('hist',this)">ISTORIC</button>
   </div>
 
-  <!-- Metrici -->
-  <div class="metrics">
-    <div class="metric-card">
-      <div class="metric-label">PRESIUNE MAX</div>
-      <div class="metric-value" id="pmaxVal">—</div>
+  <!-- ── TAB LIVE ──────────────────────────────────────────────────────── -->
+  <div class="tab-page active" id="tab-live">
+
+    <!-- Greutate -->
+    <div class="weight-card">
+      <div class="card-label" style="text-align:center">GREUTATE CORPORALĂ</div>
+      <div class="weight-num" id="weightVal">—<span class="weight-unit">kg</span></div>
     </div>
-    <div class="metric-card">
-      <div class="metric-label">ASIMETRIE</div>
-      <div class="metric-value" id="asymVal">—</div>
+
+    <!-- Metrici -->
+    <div class="metrics">
+      <div class="metric-card"><div class="card-label">PRESIUNE MAX</div><div class="metric-val" id="pmaxVal">—</div></div>
+      <div class="metric-card"><div class="card-label">ASIMETRIE</div>  <div class="metric-val" id="asymVal">—</div></div>
+      <div class="metric-card"><div class="card-label">ECHILIBRU</div>  <div class="metric-val" id="balVal">—</div></div>
+      <div class="metric-card"><div class="card-label">POSTURĂ</div>    <div class="metric-val" id="postVal">—</div></div>
     </div>
-    <div class="metric-card">
-      <div class="metric-label">ECHILIBRU</div>
-      <div class="metric-value" id="balanceVal">—</div>
+
+    <!-- Tălpi -->
+    <div class="feet-card">
+      <div class="feet-labels"><span>PICIOR STÂNG</span><span>PICIOR DREPT</span></div>
+      <canvas id="feetCanvas" width="460" height="280"></canvas>
     </div>
-    <div class="metric-card">
-      <div class="metric-label">POSTURĂ</div>
-      <div class="metric-value" id="postureVal">—</div>
+
+    <!-- Scor -->
+    <div class="score-row">
+      <canvas id="scoreCanvas" width="86" height="86"></canvas>
+      <div class="score-info">
+        <div class="score-lbl">SCOR SĂNĂTATE</div>
+        <div class="score-txt" id="scoreTxt">Aștept date de la senzori...</div>
+      </div>
+    </div>
+
+    <!-- Diagnostic -->
+    <div class="card">
+      <div class="card-label">REZULTAT DIAGNOSTIC</div>
+      <div class="diag-list" id="diagList">
+        <div class="diag-item">Aștept date de la ESP32...</div>
+      </div>
+    </div>
+
+    <!-- Analiză -->
+    <div class="analysis-card">
+      <div class="dur-row">
+        <label>DURATĂ SESIUNE</label>
+        <input class="dur-input" type="number" id="durInput" value="60" min="10" max="300">
+      </div>
+      <div class="progress-bg"><div class="progress-fill" id="progFill"></div></div>
+      <div class="btn-row">
+        <button class="btn-analyze" id="btnAnalyze" onclick="toggleAnalysis()">▶ ANALIZEAZĂ</button>
+        <button class="btn-export"  id="btnExport"  onclick="exportTxt()" disabled>↓ EXPORT</button>
+      </div>
+    </div>
+
+  </div>
+  <!-- ── END TAB LIVE ──────────────────────────────────────────────────── -->
+
+  <!-- ── TAB ISTORIC ───────────────────────────────────────────────────── -->
+  <div class="tab-page" id="tab-hist">
+    <div id="histList">
+      <div class="hist-empty">Nu există sesiuni salvate.</div>
     </div>
   </div>
+  <!-- ── END TAB ISTORIC ───────────────────────────────────────────────── -->
 
-  <!-- Tălpi -->
-  <div class="feet-card">
-    <div class="feet-label-row">
-      <span>PICIOR STÂNG</span>
-      <span>PICIOR DREPT</span>
-    </div>
-    <canvas id="feetCanvas" width="440" height="260"></canvas>
-  </div>
-
-  <!-- Scor + Diagnostic -->
-  <div class="score-row">
-    <canvas id="scoreCanvas" width="80" height="80"></canvas>
-    <div class="score-info">
-      <div class="score-label">SCOR SĂNĂTATE</div>
-      <div class="score-text" id="scoreText">Aștept date de la senzori...</div>
-    </div>
-  </div>
-
-  <div class="diag-card">
-    <div class="diag-title">REZULTAT DIAGNOSTIC</div>
-    <div class="diag-list" id="diagList">
-      <div class="diag-item">Aștept date de la ESP32...</div>
-    </div>
-  </div>
-
-  <div class="footer">
-    Sistem Diagnostic Plantar v3.0 · ESP32-S3 · HiveMQ
-  </div>
-
+  <div class="footer">Sistem Diagnostic Plantar v3.0 · ESP32-S3 · HiveMQ</div>
 </div>
 
 <script>
-// ── MQTT Config ───────────────────────────────────────────────────────────────
-const BROKER   = 'wss://39286a92d684497a9b2997388614f284.s1.eu.hivemq.cloud:8884/mqtt';
-const TOPIC    = 'plantar/date';
+// ── MQTT ──────────────────────────────────────────────────────────────────────
+const BROKER    = 'wss://39286a92d684497a9b2997388614f284.s1.eu.hivemq.cloud:8884/mqtt';
+const TOPIC     = 'plantar/date';
 const MQTT_USER = 'esp32user';
 const MQTT_PASS = 'Bridge123';
 
-// ── Pozitii senzori (normalized 0-1) ─────────────────────────────────────────
-// [x, y] pe conturul talpii — stanga
+// ── Pozitii senzori (x,y normalizat) ─────────────────────────────────────────
 const POS_L = [
-  [0.55, 0.15],  // S0 haluce
-  [0.40, 0.22],  // S1 falange
-  [0.35, 0.50],  // S2 arc medial
-  [0.55, 0.38],  // S3 metatars
-  [0.38, 0.62],  // S4 arc medial 2
-  [0.45, 0.78],  // S5 calcai int
-  [0.60, 0.82],  // S6 calcai ext (ABSENT)
+  [0.55,0.13],[0.40,0.21],[0.35,0.49],[0.55,0.37],
+  [0.38,0.60],[0.44,0.77],[0.60,0.81]
 ];
-const POS_R = POS_L.map(([x,y]) => [1-x, y]);
+const POS_R = POS_L.map(([x,y])=>[1-x,y]);
 
-// ── Stare ─────────────────────────────────────────────────────────────────────
-let sensors = new Array(14).fill(0);
-let weight  = 0;
-let score   = 0;
+// ── Stare globala ─────────────────────────────────────────────────────────────
+let sensors     = new Array(14).fill(0);
+let weight      = 0;
+let analysisData= [];
+let isAnalyzing = false;
+let analyzeTimer= null;
+let timerCount  = 0;
+let lastReport  = null;
+let history     = JSON.parse(localStorage.getItem('plantar_hist') || '[]');
 
-// ── Canvas references ────────────────────────────────────────────────────────
-const feetCanvas  = document.getElementById('feetCanvas');
-const fCtx        = feetCanvas.getContext('2d');
-const scoreCanvas = document.getElementById('scoreCanvas');
-const sCtx        = scoreCanvas.getContext('2d');
+// ── Canvas ────────────────────────────────────────────────────────────────────
+const fCtx = document.getElementById('feetCanvas').getContext('2d');
+const sCtx = document.getElementById('scoreCanvas').getContext('2d');
+
+// ── Tab switch ────────────────────────────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'hist') renderHistory();
+}
 
 // ── Heatmap color ─────────────────────────────────────────────────────────────
 function heatColor(v) {
-  v = Math.max(0, Math.min(1, v / 255));
+  v = Math.max(0, Math.min(1, v/255));
   if (v < 0.33) {
-    const t = v / 0.33;
-    return `rgba(${Math.round(20+38*t)},${Math.round(30+100*t)},${Math.round(180-50*t)}`;
+    const t=v/0.33;
+    return `rgba(${20+38*t|0},${30+100*t|0},${180-50*t|0}`;
   } else if (v < 0.66) {
-    const t = (v-0.33)/0.33;
-    return `rgba(${Math.round(58+197*t)},${Math.round(130+41*t)},${Math.round(130-80*t)}`;
+    const t=(v-0.33)/0.33;
+    return `rgba(${58+197*t|0},${130+41*t|0},${130-80*t|0}`;
   } else {
-    const t = (v-0.66)/0.34;
-    return `rgba(255,${Math.round(171-171*t)},${Math.round(50-50*t)}`;
+    const t=(v-0.66)/0.34;
+    return `rgba(255,${171-171*t|0},${50-50*t|0}`;
   }
 }
 
-// ── Forma anatomica talpa (puncte normalizate) ────────────────────────────────
+// ── Forma talpa ───────────────────────────────────────────────────────────────
+const FOOT_PTS = [
+  [0.35,0.08],[0.45,0.04],[0.55,0.04],[0.65,0.06],[0.70,0.10],
+  [0.75,0.16],[0.78,0.24],[0.77,0.34],[0.74,0.44],[0.72,0.54],
+  [0.73,0.64],[0.75,0.72],[0.73,0.82],[0.66,0.92],[0.52,0.97],
+  [0.38,0.94],[0.30,0.84],[0.27,0.74],[0.26,0.64],[0.24,0.54],
+  [0.23,0.44],[0.22,0.34],[0.23,0.24],[0.26,0.16],[0.30,0.10],[0.35,0.08]
+];
 function footPath(ctx, ox, oy, fw, fh, mirror) {
-  const pts = [
-    [0.35,0.08],[0.45,0.04],[0.55,0.04],[0.65,0.06],[0.70,0.10],
-    [0.75,0.16],[0.78,0.24],[0.77,0.34],[0.74,0.44],[0.72,0.54],
-    [0.73,0.64],[0.75,0.72],[0.73,0.82],[0.66,0.92],[0.52,0.97],
-    [0.38,0.94],[0.30,0.84],[0.27,0.74],[0.26,0.64],[0.24,0.54],
-    [0.23,0.44],[0.22,0.34],[0.23,0.24],[0.26,0.16],[0.30,0.10],[0.35,0.08]
-  ];
   ctx.beginPath();
-  pts.forEach(([x,y], i) => {
-    const px = mirror ? ox + fw - x*fw : ox + x*fw;
-    const py = oy + y*fh;
-    i === 0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  FOOT_PTS.forEach(([x,y],i)=>{
+    const px = mirror ? ox+fw-x*fw : ox+x*fw;
+    const py = oy+y*fh;
+    i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
   });
   ctx.closePath();
 }
 
-// ── Disegna talpile ──────────────────────────────────────────────────────────
+// ── Disegna talpi ─────────────────────────────────────────────────────────────
 function drawFeet() {
-  const W = feetCanvas.width;
-  const H = feetCanvas.height;
-  fCtx.clearRect(0, 0, W, H);
-  fCtx.fillStyle = '#111f14';
-  fCtx.fillRect(0, 0, W, H);
+  const cv = document.getElementById('feetCanvas');
+  const W=cv.width, H=cv.height;
+  fCtx.clearRect(0,0,W,H);
+  fCtx.fillStyle='#0b1a0e'; fCtx.fillRect(0,0,W,H);
+  const pad=12, gap=20, fw=(W-2*pad-gap)/2, fh=H-2*pad;
 
-  const pad = 10, gap = 20;
-  const fw  = (W - 2*pad - gap) / 2;
-  const fh  = H - 2*pad;
+  [[0,false,sensors.slice(0,7),POS_L],[fw+gap,false,sensors.slice(7,14),POS_R]].forEach(([dox,_,vals,pos])=>{
+    const ox=pad+dox;
+    footPath(fCtx,ox,pad,fw,fh,false);
+    fCtx.fillStyle='#0a1a0c'; fCtx.fill();
+    fCtx.strokeStyle='#1e3a24'; fCtx.lineWidth=1; fCtx.stroke();
 
-  [[0, false, sensors.slice(0,7), POS_L],
-   [pad+fw+gap, true, sensors.slice(7,14), POS_R]].forEach(([ox, mirror, vals, pos]) => {
-    const x0 = pad + (mirror ? fw + gap : 0);
-
-    // contur talpa
-    footPath(fCtx, x0, pad, fw, fh, false);
-    fCtx.fillStyle = '#0a1a0c';
-    fCtx.fill();
-    fCtx.strokeStyle = '#1e3a24';
-    fCtx.lineWidth = 1;
-    fCtx.stroke();
-
-    // heatmap senzori
-    fCtx.save();
-    footPath(fCtx, x0, pad, fw, fh, false);
-    fCtx.clip();
-
-    vals.forEach((val, i) => {
-      if (val < 3) return;
-      const [nx, ny] = pos[i];
-      const cx = x0 + (mirror ? fw - nx*fw : nx*fw);
-      const cy = pad + ny*fh;
-      const r  = Math.min(fw, fh) * 0.18;
-      const grad = fCtx.createRadialGradient(cx,cy,0,cx,cy,r);
-      const col  = heatColor(val);
-      const alpha = Math.round(180 * Math.min(val/120,1));
-      grad.addColorStop(0,   col+`,${alpha/255})`);
-      grad.addColorStop(0.5, col+`,${alpha/510})`);
-      grad.addColorStop(1,   col+`,0)`);
-      fCtx.fillStyle = grad;
-      fCtx.beginPath();
-      fCtx.arc(cx, cy, r, 0, Math.PI*2);
-      fCtx.fill();
+    fCtx.save(); footPath(fCtx,ox,pad,fw,fh,false); fCtx.clip();
+    vals.forEach((val,i)=>{
+      if(val<3)return;
+      const [nx,ny]=pos[i], cx=ox+nx*fw, cy=pad+ny*fh, r=Math.min(fw,fh)*0.19;
+      const g=fCtx.createRadialGradient(cx,cy,0,cx,cy,r);
+      const col=heatColor(val), a=(180*Math.min(val/120,1))|0;
+      g.addColorStop(0,col+`,${a/255})`);
+      g.addColorStop(0.5,col+`,${a/510})`);
+      g.addColorStop(1,col+`,0)`);
+      fCtx.fillStyle=g; fCtx.beginPath(); fCtx.arc(cx,cy,r,0,Math.PI*2); fCtx.fill();
     });
-
     fCtx.restore();
 
-    // bulini senzori
-    vals.forEach((val, i) => {
-      const [nx, ny] = pos[i];
-      const cx = x0 + (mirror ? fw - nx*fw : nx*fw);
-      const cy = pad + ny*fh;
-      const t  = Math.min(val / 80, 1);
-      if (t < 0.05) {
-        fCtx.fillStyle   = 'rgba(160,160,160,0.22)';
-        fCtx.strokeStyle = 'rgba(200,200,200,0.3)';
-      } else {
-        const col = heatColor(val);
-        const a   = 0.3 + 0.6*t;
-        fCtx.fillStyle   = col+`,${a})`;
-        fCtx.strokeStyle = `rgba(255,255,255,${0.2+0.4*t})`;
-      }
-      fCtx.lineWidth = 0.8;
-      fCtx.beginPath();
-      fCtx.arc(cx, cy, 8, 0, Math.PI*2);
-      fCtx.fill();
-      fCtx.stroke();
+    fCtx.strokeStyle='#1e3a24'; fCtx.lineWidth=1; footPath(fCtx,ox,pad,fw,fh,false); fCtx.stroke();
+
+    vals.forEach((val,i)=>{
+      const [nx,ny]=pos[i], cx=ox+nx*fw, cy=pad+ny*fh, t=Math.min(val/80,1);
+      fCtx.fillStyle   = t<0.05 ? 'rgba(160,160,160,.2)' : heatColor(val)+`,.${3+(6*t)|0})`;
+      fCtx.strokeStyle = t<0.05 ? 'rgba(200,200,200,.25)' : `rgba(255,255,255,${.2+.4*t})`;
+      fCtx.lineWidth=0.8;
+      fCtx.beginPath(); fCtx.arc(cx,cy,9,0,Math.PI*2); fCtx.fill(); fCtx.stroke();
     });
-
-    // linie separator
-    if (!mirror) {
-      fCtx.strokeStyle = 'rgba(30,58,36,0.6)';
-      fCtx.setLineDash([4,4]);
-      fCtx.lineWidth = 1;
-      fCtx.beginPath();
-      fCtx.moveTo(pad+fw+gap/2, pad);
-      fCtx.lineTo(pad+fw+gap/2, pad+fh);
-      fCtx.stroke();
-      fCtx.setLineDash([]);
-    }
   });
+
+  // separator
+  fCtx.strokeStyle='rgba(30,58,36,.5)'; fCtx.setLineDash([4,4]); fCtx.lineWidth=1;
+  fCtx.beginPath(); fCtx.moveTo(pad+(fw+gap/2),pad); fCtx.lineTo(pad+(fw+gap/2),pad+fh); fCtx.stroke();
+  fCtx.setLineDash([]);
 }
 
-// ── Disegna scorul ────────────────────────────────────────────────────────────
+// ── Disegna scor ──────────────────────────────────────────────────────────────
 function drawScore(s) {
-  const W = 80, H = 80, cx = W/2, cy = H/2, r = 32;
+  const W=86,H=86,cx=W/2,cy=H/2,r=34;
   sCtx.clearRect(0,0,W,H);
-  // cerc fundal
   sCtx.beginPath(); sCtx.arc(cx,cy,r,0,Math.PI*2);
-  sCtx.strokeStyle = '#1e3a24'; sCtx.lineWidth = 6; sCtx.stroke();
-  // arc scor
-  if (s > 0) {
-    const color = s >= 70 ? '#3fb950' : s >= 40 ? '#d29922' : '#f85149';
-    sCtx.beginPath();
-    sCtx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + (s/100)*Math.PI*2);
-    sCtx.strokeStyle = color; sCtx.lineWidth = 6;
-    sCtx.lineCap = 'round'; sCtx.stroke();
+  sCtx.strokeStyle='#1e3a24'; sCtx.lineWidth=7; sCtx.stroke();
+  if(s>0){
+    const c=s>=70?'#3fb950':s>=40?'#d29922':'#f85149';
+    sCtx.beginPath(); sCtx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+(s/100)*Math.PI*2);
+    sCtx.strokeStyle=c; sCtx.lineWidth=7; sCtx.lineCap='round'; sCtx.stroke();
   }
-  // text
-  sCtx.fillStyle = '#d4e8d0';
-  sCtx.font = 'bold 20px Courier New';
-  sCtx.textAlign = 'center';
-  sCtx.textBaseline = 'middle';
-  sCtx.fillText(s, cx, cy);
+  sCtx.fillStyle='#d4e8d0'; sCtx.font='bold 22px Courier New';
+  sCtx.textAlign='center'; sCtx.textBaseline='middle';
+  sCtx.fillText(s,cx,cy);
 }
 
-// ── Algoritm diagnostic ───────────────────────────────────────────────────────
+// ── Diagnostic ────────────────────────────────────────────────────────────────
 function runDiagnostic(s) {
-  const L = s.slice(0,7), R = s.slice(7,14);
-  const lines = []; let penalty = 0;
+  const L=s.slice(0,7), R=s.slice(7,14);
+  const lines=[]; let pen=0;
 
-  // Platfus
-  [L,R].forEach((side,si) => {
-    const label = si===0?'stâng':'drept';
-    if (side[2] > 25) { lines.push({t:'warn', m:`⚠ Platfus (${label}): arc aplatizat`}); penalty+=12; }
-    else               lines.push({t:'ok',   m:`✓ Boltă sănătoasă (${label})`});
+  [L,R].forEach((side,si)=>{
+    const lbl=si===0?'stâng':'drept';
+    if(side[2]>25){lines.push({t:'warn',m:`⚠ Platfus (${lbl}): arc aplatizat`});pen+=12;}
+    else           lines.push({t:'ok',  m:`✓ Boltă sănătoasă (${lbl})`});
   });
 
-  // Pronatie/Supinatie
-  const diff = ((L[3]-L[2]) + (R[3]-R[2])) / 2;
-  if      (diff >  12) { lines.push({t:'warn', m:'⚠ Supinație: greutate pe marginea externă'}); penalty+=12; }
-  else if (diff < -12) { lines.push({t:'warn', m:'⚠ Pronație: greutate pe marginea internă'});  penalty+=12; }
-  else                   lines.push({t:'ok',   m:'✓ Distribuție mediolaterală echilibrată'});
+  const diff=((L[3]-L[2])+(R[3]-R[2]))/2;
+  if     (diff>12) {lines.push({t:'warn',m:'⚠ Supinație: greutate pe marginea externă'});pen+=12;}
+  else if(diff<-12){lines.push({t:'warn',m:'⚠ Pronație: greutate pe marginea internă'});pen+=12;}
+  else              lines.push({t:'ok',  m:'✓ Distribuție mediolaterală echilibrată'});
 
-  // Asimetrie
-  const sl = L.reduce((a,b)=>a+b,0), sr = R.reduce((a,b)=>a+b,0);
-  const asym = Math.abs(sl-sr)/Math.max(sl+sr,1)*100;
-  if (asym > 20) { lines.push({t:'warn', m:`⚠ Asimetrie ${asym.toFixed(0)}% stg/drt`}); penalty+=Math.min(35,asym*1.4|0); }
-  else             lines.push({t:'ok',   m:`✓ Echilibru stg/drt: ${asym.toFixed(0)}%`});
+  const sl=L.reduce((a,b)=>a+b,0), sr=R.reduce((a,b)=>a+b,0);
+  const asym=Math.abs(sl-sr)/Math.max(sl+sr,1)*100;
+  if(asym>20){lines.push({t:'warn',m:`⚠ Asimetrie ${asym.toFixed(0)}% stg/drt`});pen+=Math.min(35,asym*1.4|0);}
+  else        lines.push({t:'ok',  m:`✓ Echilibru stg/drt: ${asym.toFixed(0)}%`});
 
-  // Presiune maxima
-  const pmax = Math.max(...s);
-  if      (pmax > 200) { lines.push({t:'bad',  m:`✕ Presiune critică: ${pmax} (consult medical!)`}); penalty+=25; }
-  else if (pmax > 140) { lines.push({t:'warn', m:`⚠ Presiune ridicată: ${pmax} (atenție)`});         penalty+=10; }
-  else                   lines.push({t:'ok',   m:`✓ Presiune normală: ${pmax}`});
+  const pmax=Math.max(...s);
+  if     (pmax>200){lines.push({t:'bad', m:`✕ Presiune critică: ${pmax}`});pen+=25;}
+  else if(pmax>140){lines.push({t:'warn',m:`⚠ Presiune ridicată: ${pmax}`});pen+=10;}
+  else              lines.push({t:'ok',  m:`✓ Presiune normală: ${pmax}`});
 
-  const sc = Math.max(0, Math.min(100, 100 - penalty));
-  return { lines, score: sc, asym, pmax,
-    posture: diff > 12 ? 'Supinație' : diff < -12 ? 'Pronație' : 'Neutru',
-    balance: (100 - asym).toFixed(0) + '%' };
+  const sc=Math.max(0,Math.min(100,100-pen));
+  return {lines, score:sc, asym, pmax,
+    posture: diff>12?'Supinație':diff<-12?'Pronație':'Neutru',
+    balance: (100-asym).toFixed(0)+'%'};
 }
 
-// ── Actualizeaza UI ───────────────────────────────────────────────────────────
+// ── Update UI ─────────────────────────────────────────────────────────────────
 function updateUI(w, s) {
-  // greutate
-  const wEl = document.getElementById('weightVal');
-  wEl.innerHTML = (w > 0 ? w.toFixed(1) : '—') + '<span class="weight-unit">kg</span>';
+  const wEl=document.getElementById('weightVal');
+  wEl.innerHTML=(w>0?w.toFixed(1):'—')+'<span class="weight-unit">kg</span>';
+  const d=runDiagnostic(s);
 
-  // diagnostic
-  const d = runDiagnostic(s);
-  score = d.score;
+  document.getElementById('pmaxVal').textContent=d.pmax;
+  document.getElementById('pmaxVal').style.color=d.pmax>200?'var(--red)':d.pmax>140?'var(--yellow)':'var(--green)';
+  document.getElementById('asymVal').textContent=d.asym.toFixed(0)+'%';
+  document.getElementById('asymVal').style.color=d.asym>20?'var(--red)':d.asym>10?'var(--yellow)':'var(--green)';
+  document.getElementById('balVal').textContent=d.balance;
+  document.getElementById('postVal').textContent=d.posture;
+  document.getElementById('postVal').style.color=d.posture==='Neutru'?'var(--green)':'var(--yellow)';
 
-  // metrici
-  const pmax = d.pmax;
-  document.getElementById('pmaxVal').textContent = pmax;
-  document.getElementById('pmaxVal').style.color =
-    pmax > 200 ? 'var(--red)' : pmax > 140 ? 'var(--yellow)' : 'var(--green)';
-
-  document.getElementById('asymVal').textContent  = d.asym.toFixed(0) + '%';
-  document.getElementById('asymVal').style.color  =
-    d.asym > 20 ? 'var(--red)' : d.asym > 10 ? 'var(--yellow)' : 'var(--green)';
-
-  document.getElementById('balanceVal').textContent = d.balance;
-  document.getElementById('postureVal').textContent = d.posture;
-  document.getElementById('postureVal').style.color =
-    d.posture === 'Neutru' ? 'var(--green)' : 'var(--yellow)';
-
-  // scor
   drawScore(d.score);
-  const scoreColor = d.score >= 70 ? '#3fb950' : d.score >= 40 ? '#d29922' : '#f85149';
-  document.getElementById('scoreText').innerHTML =
-    `<span style="color:${scoreColor};font-size:16px;font-weight:bold">${d.score}/100</span><br>` +
-    (d.score >= 70 ? 'Postură bună' : d.score >= 40 ? 'Necesită atenție' : 'Consultați un specialist');
+  const sc=d.score>=70?'#3fb950':d.score>=40?'#d29922':'#f85149';
+  document.getElementById('scoreTxt').innerHTML=
+    `<span style="color:${sc};font-size:18px;font-weight:bold">${d.score}/100</span><br>`+
+    (d.score>=70?'Postură bună':d.score>=40?'Necesită atenție':'Consultați un specialist');
 
-  // lista diagnostic
-  const list = document.getElementById('diagList');
-  list.innerHTML = d.lines.map(l =>
-    `<div class="diag-item ${l.t}">${l.m}</div>`
-  ).join('');
+  document.getElementById('diagList').innerHTML=d.lines.map(l=>
+    `<div class="diag-item ${l.t}">${l.m}</div>`).join('');
 
-  // tălpi
   drawFeet();
+  if(isAnalyzing) analysisData.push([...s]);
+}
+
+// ── Analiza ───────────────────────────────────────────────────────────────────
+function toggleAnalysis() {
+  if(isAnalyzing) { stopAnalysis(); return; }
+  startAnalysis();
+}
+
+function startAnalysis() {
+  const dur = Math.max(10, Math.min(300, parseInt(document.getElementById('durInput').value)||60));
+  document.getElementById('durInput').value = dur;
+  analysisData = [];
+  isAnalyzing  = true;
+  timerCount   = dur;
+  document.getElementById('btnAnalyze').disabled = false;
+  document.getElementById('btnAnalyze').textContent = `⏹ STOP  ${dur}s`;
+  document.getElementById('btnExport').disabled = true;
+  document.getElementById('btnExport').classList.remove('ready');
+  document.getElementById('progFill').style.width = '0%';
+
+  analyzeTimer = setInterval(()=>{
+    timerCount--;
+    const pct = ((dur-timerCount)/dur*100).toFixed(1);
+    document.getElementById('progFill').style.width = pct+'%';
+    document.getElementById('btnAnalyze').textContent = `⏹ STOP  ${timerCount}s`;
+    if(timerCount<=0) stopAnalysis();
+  }, 1000);
+}
+
+function stopAnalysis() {
+  clearInterval(analyzeTimer);
+  isAnalyzing = false;
+  document.getElementById('btnAnalyze').textContent = '▶ ANALIZEAZĂ';
+  document.getElementById('progFill').style.width = '100%';
+
+  if(analysisData.length < 3) {
+    document.getElementById('diagList').innerHTML =
+      '<div class="diag-item warn">⚠ Prea puține date colectate. Verificați conexiunea.</div>';
+    return;
+  }
+
+  // medie per senzor
+  const avg = new Array(14).fill(0).map((_,i)=>
+    analysisData.reduce((s,f)=>s+f[i],0)/analysisData.length);
+
+  if(avg.reduce((a,b)=>a+b,0)<10){
+    document.getElementById('diagList').innerHTML =
+      '<div class="diag-item warn">⚠ Presiune insuficientă. Stați pe cântar în timpul sesiunii.</div>';
+    return;
+  }
+
+  const d = runDiagnostic(avg);
+  drawScore(d.score);
+
+  // salveaza in istoric
+  const entry = {
+    date: new Date().toLocaleString('ro-RO'),
+    weight: weight.toFixed(1),
+    duration: parseInt(document.getElementById('durInput').value),
+    score: d.score,
+    posture: d.posture,
+    asym: d.asym.toFixed(0),
+    pmax: d.pmax,
+    summary: d.lines.filter(l=>l.t!=='ok').map(l=>l.m).join(' | ') || '✓ Fără anomalii detectate',
+    report: d.lines.map(l=>l.m).join('\n')
+  };
+  history.unshift(entry);
+  if(history.length>50) history.pop();
+  localStorage.setItem('plantar_hist', JSON.stringify(history));
+
+  lastReport = entry;
+  document.getElementById('btnExport').disabled = false;
+  document.getElementById('btnExport').classList.add('ready');
+}
+
+// ── Export TXT ────────────────────────────────────────────────────────────────
+function exportTxt() {
+  if(!lastReport) return;
+  const r = lastReport;
+  const txt = [
+    '=== RAPORT DIAGNOSTIC PLANTAR ===',
+    `Data: ${r.date}`,
+    `Greutate: ${r.weight} kg`,
+    `Durata: ${r.duration} sec`,
+    `Scor: ${r.score}/100`,
+    `Postura: ${r.posture}`,
+    `Asimetrie: ${r.asym}%`,
+    `Presiune max: ${r.pmax}`,
+    '',
+    '=== DETALII ===',
+    r.report,
+    '',
+    '--- Sistem Diagnostic Plantar v3.0 ---'
+  ].join('\n');
+
+  const blob = new Blob([txt], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `diagnostic_${r.date.replace(/[/:, ]/g,'_')}.txt`;
+  a.click();
+}
+
+// ── Istoric ───────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const el = document.getElementById('histList');
+  if(!history.length) {
+    el.innerHTML = '<div class="hist-empty">Nu există sesiuni salvate.</div>';
+    return;
+  }
+  el.innerHTML = history.map(e=>{
+    const sc = e.score>=70?'var(--green)':e.score>=40?'var(--yellow)':'var(--red)';
+    return `<div class="hist-item">
+      <div class="hist-top">
+        <span class="hist-date">${e.date}</span>
+        <span class="hist-score" style="color:${sc}">${e.score}/100</span>
+      </div>
+      <div class="hist-summary">${e.summary}</div>
+      <div class="hist-meta">Greutate: ${e.weight} kg &nbsp;·&nbsp; Durată: ${e.duration}s &nbsp;·&nbsp; Postură: ${e.posture}</div>
+    </div>`;
+  }).join('');
 }
 
 // ── MQTT ──────────────────────────────────────────────────────────────────────
 function setStatus(state) {
-  const dot  = document.getElementById('dot');
-  const text = document.getElementById('statusText');
-  dot.className = 'dot ' + state;
-  text.textContent = state === 'connected' ? 'Conectat' :
-                     state === 'connecting' ? 'Conectare...' : 'Deconectat';
+  const dot=document.getElementById('dot'), txt=document.getElementById('statusText');
+  dot.className='dot '+state;
+  txt.textContent=state==='connected'?'Conectat':state==='connecting'?'Conectare...':'Deconectat';
 }
 
-function connectMQTT() {
-  setStatus('connecting');
-  const client = mqtt.connect(BROKER, {
-    username:  MQTT_USER,
-    password:  MQTT_PASS,
-    clientId:  'HMI_' + Math.random().toString(16).slice(2,8),
-    keepalive: 30,
-    reconnectPeriod: 5000,
-  });
-
-  client.on('connect', () => {
-    setStatus('connected');
-    client.subscribe(TOPIC);
-  });
-
-  client.on('message', (topic, payload) => {
-    try {
-      const d = JSON.parse(payload.toString());
-      if (d.s && d.s.length === 14) {
-        updateUI(d.w || 0, d.s);
-      }
-    } catch(e) { console.warn('Parse error:', e); }
-  });
-
-  client.on('disconnect', () => setStatus('disconnected'));
-  client.on('error',      () => setStatus('disconnected'));
-  client.on('reconnect',  () => setStatus('connecting'));
-}
+const mqttClient = mqtt.connect(BROKER, {
+  username: MQTT_USER, password: MQTT_PASS,
+  clientId: 'HMI_'+Math.random().toString(16).slice(2,8),
+  keepalive: 30, reconnectPeriod: 5000
+});
+setStatus('connecting');
+mqttClient.on('connect', ()=>{ setStatus('connected'); mqttClient.subscribe(TOPIC); });
+mqttClient.on('message', (t,payload)=>{
+  try {
+    const d=JSON.parse(payload.toString());
+    if(d.s && d.s.length===14){ sensors=[...d.s]; weight=d.w||0; updateUI(weight,sensors); }
+  } catch(e){}
+});
+mqttClient.on('disconnect', ()=>setStatus('disconnected'));
+mqttClient.on('error',      ()=>setStatus('disconnected'));
+mqttClient.on('reconnect',  ()=>setStatus('connecting'));
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 drawFeet();
 drawScore(0);
-connectMQTT();
 </script>
 </body>
 </html>
