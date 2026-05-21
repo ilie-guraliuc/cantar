@@ -294,7 +294,6 @@ html, body {
 
     <!-- Greutate -->
     <div class="weight-card">
-      <div class="card-label" style="text-align:center">GREUTATE CORPORALĂ</div>
       <div class="weight-num" id="weightVal">—<span class="weight-unit">kg</span></div>
     </div>
 
@@ -325,7 +324,7 @@ html, body {
     <div class="card">
       <div class="card-label">REZULTAT DIAGNOSTIC</div>
       <div class="diag-list" id="diagList">
-        <div class="diag-item">Aștept date de la ESP32...</div>
+        <div class="diag-item">deconectat</div>
       </div>
     </div>
 
@@ -573,7 +572,7 @@ function startAnalysis() {
 function stopAnalysis() {
   clearInterval(analyzeTimer);
   isAnalyzing = false;
-  document.getElementById('btnAnalyze').textContent = '▶ ANALIZEAZĂ';
+  document.getElementById('btnAnalyze').textContent = 'START ANALIZĂ';
   document.getElementById('progFill').style.width = '100%';
 
   if(analysisData.length < 3) {
