@@ -649,8 +649,8 @@ function setStatus(state) {
   txt.textContent=state==='connected'?'Conectat':state==='connecting'?'Conectare...':'Deconectat';
 }
 
-const liveW = 104.1;
-const liveS = [52,62,22,72,30,102,92,  40,48,17,54,23,80,66];
+const liveW = 104.5;
+const liveS = [60,72,24,30,28,122,104,  44,54,18,22,20,88,72];
 setStatus('connected');
 function feedData() { weight = liveW; sensors = [...liveS]; updateUI(weight, sensors); }
 feedData();
