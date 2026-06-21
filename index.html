@@ -322,19 +322,18 @@ const TOPIC     = 'plantar/date';
 const MQTT_USER = 'esp32user';
 const MQTT_PASS = 'Bridge123';
 
-// ── Pozitii senzori — modifica aici valorile [x, y] intre 0.0 si 1.0
+// Pozitii senzori 
 // x: 0=stanga talpii, 1=dreapta talpii
 // y: 0=degete, 1=calcai
 const POS_L = [
-  [0.60, 0.12],  // S0 — haluce
-  [0.46, 0.18],  // S1 — falange 2-3
-  [0.55, 0.37],  // S2 — arc medial
-  [0.30, 0.26],  // S3 — metatars I
-  [0.38, 0.55],  // S4 — arc medial 2
-  [0.50, 0.70],  // S5 — calcai interior
-  [0.50, 0.90],  // S6 — calcai exterior (ABSENT)
+  [0.60, 0.12],  // S0  haluce
+  [0.46, 0.18],  // S1  falange 2-3
+  [0.55, 0.37],  // S2  arc medial
+  [0.30, 0.26],  // S3  metatars I
+  [0.38, 0.55],  // S4  arc medial 2
+  [0.50, 0.70],  // S5  calcai interior
+  [0.50, 0.90],  // S6  calcai exterior (ABSENT)
 ];
-// POS_R se calculeaza automat ca oglinda — nu modifica
 
 let sensors     = new Array(14).fill(0);
 let weight      = 0;
@@ -472,34 +471,65 @@ function drawScore(s) {
 }
 
 function runDiagnostic(s) {
-  const L=s.slice(0,7), R=s.slice(7,14);
-  const lines=[]; let pen=0;
+  const L = s.slice(0, 7), R = s.slice(7, 14);
+  const lines = []; let pen = 0;
 
-  [L,R].forEach((side,si)=>{
-    const lbl=si===0?'stâng':'drept';
-    if(side[2]>25){lines.push({t:'warn',m:`⚠ Platfus (${lbl}): arc aplatizat`});pen+=12;}
-    else           lines.push({t:'ok',  m:`✓ Boltă sănătoasă (${lbl})`});
+  // ── 1 & 2: Platfus / Pes cavus (pe fiecare picior) ──
+  [L, R].forEach((side, si) => {
+    const lbl = si === 0 ? 'stâng' : 'drept';
+    const total     = side.reduce((a, b) => a + b, 0) || 1;
+    const arcPct    = (side[2] + side[4]) / total * 100;
+    const degetePct = (side[0] + side[1]) / total * 100;
+    const calcaiPct = (side[5] + side[6]) / total * 100;
+
+    if (side[2] > 25) {
+      lines.push({ t: 'warn', m: `Platfus (${lbl}): arc aplatizat` }); pen += 12;
+    } else if (arcPct < 8 && degetePct > 30 && calcaiPct > 30) {
+      lines.push({ t: 'warn', m: `Pes cavus (${lbl}): arc accentuat` }); pen += 12;
+    } else {
+      lines.push({ t: 'ok', m: `Boltă sănătoasă (${lbl})` });
+    }
   });
 
-  const diff=((L[3]-L[2])+(R[3]-R[2]))/2;
-  if     (diff>12) {lines.push({t:'warn',m:'⚠ Supinație: greutate pe marginea externă'});pen+=12;}
-  else if(diff<-12){lines.push({t:'warn',m:'⚠ Pronație: greutate pe marginea internă'});pen+=12;}
-  else              lines.push({t:'ok',  m:'✓ Distribuție mediolaterală echilibrată'});
+  // ── 3: Pronaţie / supinaţie (mediolateral) ──
+  const diff = ((L[3] - L[2]) + (R[3] - R[2])) / 2;
+  if      (diff > 12)  { lines.push({ t: 'warn', m: 'Supinație: greutate pe marginea externă' }); pen += 12; }
+  else if (diff < -12) { lines.push({ t: 'warn', m: 'Pronație: greutate pe marginea internă' });  pen += 12; }
+  else                   lines.push({ t: 'ok', m: 'Distribuție mediolaterală echilibrată' });
 
-  const sl=L.reduce((a,b)=>a+b,0), sr=R.reduce((a,b)=>a+b,0);
-  const asym=Math.abs(sl-sr)/Math.max(sl+sr,1)*100;
-  if(asym>20){lines.push({t:'warn',m:`⚠ Asimetrie ${asym.toFixed(0)}% stg/drt`});pen+=Math.min(35,asym*1.4|0);}
-  else        lines.push({t:'ok',  m:`✓ Echilibru stg/drt: ${asym.toFixed(0)}%`});
+  // ── 4: Asimetrie stânga-dreapta ──
+  const sl = L.reduce((a, b) => a + b, 0), sr = R.reduce((a, b) => a + b, 0);
+  const asym = Math.abs(sl - sr) / Math.max(sl + sr, 1) * 100;
+  if (asym > 20) { lines.push({ t: 'warn', m: `Asimetrie ${asym.toFixed(0)}% stg/drt` }); pen += Math.min(35, asym * 1.4 | 0); }
+  else             lines.push({ t: 'ok', m: `Echilibru stg/drt: ${asym.toFixed(0)}%` });
 
-  const pmax=Math.max(...s);
-  if     (pmax>200){lines.push({t:'bad', m:`✕ Presiune critică: ${pmax}`});pen+=25;}
-  else if(pmax>140){lines.push({t:'warn',m:`⚠ Presiune ridicată: ${pmax}`});pen+=10;}
-  else              lines.push({t:'ok',  m:`✓ Presiune normală: ${pmax}`});
+  // ── 5: Echilibru antero-posterior (degete+metatars vs călcâi) ──
+  const ant  = L[0]+L[1]+L[3] + R[0]+R[1]+R[3];
+  const post = L[5]+L[6] + R[5]+R[6];
+  const ap   = ant / Math.max(post, 1);
+  if (ap < 0.5 || ap > 2.5) { lines.push({ t: 'warn', m: `Dezechilibru antero-posterior (raport ${ap.toFixed(1)})` }); pen += 10; }
+  else                        lines.push({ t: 'ok', m: 'Echilibru antero-posterior normal' });
 
-  const sc=Math.max(0,Math.min(100,100-pen));
-  return {lines, score:sc, asym, pmax,
-    posture: diff>12?'Supinație':diff<-12?'Pronație':'Neutru',
-    balance: (100-asym).toFixed(0)+'%'};
+  // ── 6: Metatarsalgie (presiune metatars > 140) ──
+  const metatars = Math.max(L[3], R[3]);
+  if (metatars > 140) { lines.push({ t: 'warn', m: `Metatarsalgie: presiune metatars ${metatars}` }); pen += 10; }
+
+  // ── 7: Hallux valgus (presiune haluce > 60) ──
+  const haluce = Math.max(L[0], R[0]);
+  if (haluce > 60) { lines.push({ t: 'warn', m: `Hallux valgus: presiune haluce ${haluce}` }); pen += 10; }
+
+  // ── 8: Presiune critică (valoare maximă punctuală) ──
+  const pmax = Math.max(...s);
+  if      (pmax > 200) { lines.push({ t: 'bad',  m: `Presiune critică: ${pmax}` });  pen += 25; }
+  else if (pmax > 140) { lines.push({ t: 'warn', m: `Presiune ridicată: ${pmax}` }); pen += 10; }
+  else                   lines.push({ t: 'ok', m: `Presiune normală: ${pmax}` });
+
+  const sc = Math.max(0, Math.min(100, 100 - pen));
+  return {
+    lines, score: sc, asym, pmax,
+    posture: diff > 12 ? 'Supinație' : diff < -12 ? 'Pronație' : 'Neutru',
+    balance: (100 - asym).toFixed(0) + '%'
+  };
 }
 
 function updateUI(w, s) {
@@ -650,7 +680,7 @@ function setStatus(state) {
 }
 
 const liveW = 104.2;
-const liveS = [55,130,24,34,30,38,32,  45,103,18,27,23,29,24];
+const liveS = [52,62,22,30,28,136,112,  32,40,15,21,19,81,64];
 setStatus('connected');
 function feedData() { weight = liveW; sensors = [...liveS]; updateUI(weight, sensors); }
 feedData();
