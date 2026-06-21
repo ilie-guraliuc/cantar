@@ -648,18 +648,14 @@ function setStatus(state) {
   dot.className='dot '+state;
   txt.textContent=state==='connected'?'Conectat':state==='connecting'?'Conectare...':'Deconectat';
 }
-const liveW = 103.7;
-const liveS = [58, 72, 20, 30, 34, 175, 128,   38, 46, 14, 20, 22, 96, 74];
 
+const liveW = 104.5;
+const liveS = [60,72,24,30,28,122,104,  44,54,18,22,20,88,72];
 setStatus('connected');
-function feedData() {
-  weight  = liveW;
-  sensors = [...liveS];
-  updateUI(weight, sensors);
-}
+function feedData() { weight = liveW; sensors = [...liveS]; updateUI(weight, sensors); }
 feedData();
 setInterval(feedData, 200);
-
+  
 </script>
 </body>
 </html>
