@@ -679,13 +679,25 @@ function setStatus(state) {
   txt.textContent=state==='connected'?'Conectat':state==='connecting'?'Conectare...':'Deconectat';
 }
 
-const liveW = 104.2;
-const liveS = [55,130,24,34,30,38,32,  45,103,18,27,23,29,24];
-setStatus('connected');
-function feedData() { weight = liveW; sensors = [...liveS]; updateUI(weight, sensors); }
-feedData();
-setInterval(feedData, 200);
-  
+const mqttClient = mqtt.connect(BROKER, {
+  username: MQTT_USER, password: MQTT_PASS,
+  clientId: 'HMI_'+Math.random().toString(16).slice(2,8),
+  keepalive: 30, reconnectPeriod: 5000
+});
+setStatus('connecting');
+mqttClient.on('connect', ()=>{ setStatus('connected'); mqttClient.subscribe(TOPIC); });
+mqttClient.on('message', (t,payload)=>{
+  try {
+    const d=JSON.parse(payload.toString());
+    if(d.s && d.s.length===14){ sensors=[...d.s]; weight=d.w||0; updateUI(weight,sensors); }
+  } catch(e){}
+});
+mqttClient.on('disconnect', ()=>setStatus('disconnected'));
+mqttClient.on('error',      ()=>setStatus('disconnected'));
+mqttClient.on('reconnect',  ()=>setStatus('connecting'));
+
+drawFeet();
+drawScore(0);
 </script>
 </body>
 </html>
