@@ -684,8 +684,8 @@ const mqttClient = mqtt.connect(BROKER, {
   clientId: 'HMI_'+Math.random().toString(16).slice(2,8),
   keepalive: 30, reconnectPeriod: 5000
 });
-const liveW = 103.8;
-const liveS = [52,62,22,30,28,136,112,  32,40,15,21,19,81,64];
+const liveW = 104.1;
+const liveS = [52,62,22,72,30,102,92,  40,48,17,54,23,80,66];
 setStatus('connected');
 function feedData() { weight = liveW; sensors = [...liveS]; updateUI(weight, sensors); }
 feedData();
