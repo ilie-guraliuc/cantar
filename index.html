@@ -6,7 +6,7 @@
 <title>Cantar Inteligent</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.3.4/mqtt.min.js"></script>
 <style>
-/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --bg:      #0b1a0e;
@@ -474,7 +474,7 @@ function runDiagnostic(s) {
   const L = s.slice(0, 7), R = s.slice(7, 14);
   const lines = []; let pen = 0;
 
-  // ── 1 & 2: Platfus / Pes cavus (pe fiecare picior) ──
+  //1 & 2: Platfus / Pes cavus (pe fiecare picior) ──
   [L, R].forEach((side, si) => {
     const lbl = si === 0 ? 'stâng' : 'drept';
     const total     = side.reduce((a, b) => a + b, 0) || 1;
@@ -491,34 +491,34 @@ function runDiagnostic(s) {
     }
   });
 
-  // ── 3: Pronaţie / supinaţie (mediolateral) ──
+  //3: Pronaţie / supinaţie (mediolateral) ──
   const diff = ((L[3] - L[2]) + (R[3] - R[2])) / 2;
   if      (diff > 12)  { lines.push({ t: 'warn', m: 'Supinație: greutate pe marginea externă' }); pen += 12; }
   else if (diff < -12) { lines.push({ t: 'warn', m: 'Pronație: greutate pe marginea internă' });  pen += 12; }
   else                   lines.push({ t: 'ok', m: 'Distribuție mediolaterală echilibrată' });
 
-  // ── 4: Asimetrie stânga-dreapta ──
+  //4: Asimetrie stânga-dreapta ──
   const sl = L.reduce((a, b) => a + b, 0), sr = R.reduce((a, b) => a + b, 0);
   const asym = Math.abs(sl - sr) / Math.max(sl + sr, 1) * 100;
   if (asym > 20) { lines.push({ t: 'warn', m: `Asimetrie ${asym.toFixed(0)}% stg/drt` }); pen += Math.min(35, asym * 1.4 | 0); }
   else             lines.push({ t: 'ok', m: `Echilibru stg/drt: ${asym.toFixed(0)}%` });
 
-  // ── 5: Echilibru antero-posterior (degete+metatars vs călcâi) ──
+  //5: Echilibru antero-posterior (degete+metatars vs călcâi) ──
   const ant  = L[0]+L[1]+L[3] + R[0]+R[1]+R[3];
   const post = L[5]+L[6] + R[5]+R[6];
   const ap   = ant / Math.max(post, 1);
   if (ap < 0.5 || ap > 2.5) { lines.push({ t: 'warn', m: `Dezechilibru antero-posterior (raport ${ap.toFixed(1)})` }); pen += 10; }
   else                        lines.push({ t: 'ok', m: 'Echilibru antero-posterior normal' });
 
-  // ── 6: Metatarsalgie (presiune metatars > 140) ──
+  // 6: Metatarsalgie (presiune metatars > 140) ──
   const metatars = Math.max(L[3], R[3]);
   if (metatars > 140) { lines.push({ t: 'warn', m: `Metatarsalgie: presiune metatars ${metatars}` }); pen += 10; }
 
-  // ── 7: Hallux valgus (presiune haluce > 60) ──
+  //7: Hallux valgus (presiune haluce > 60) ──
   const haluce = Math.max(L[0], R[0]);
   if (haluce > 60) { lines.push({ t: 'warn', m: `Hallux valgus: presiune haluce ${haluce}` }); pen += 10; }
 
-  // ── 8: Presiune critică (valoare maximă punctuală) ──
+  //8: Presiune critică (valoare maximă punctuală) ──
   const pmax = Math.max(...s);
   if      (pmax > 200) { lines.push({ t: 'bad',  m: `Presiune critică: ${pmax}` });  pen += 25; }
   else if (pmax > 140) { lines.push({ t: 'warn', m: `Presiune ridicată: ${pmax}` }); pen += 10; }
@@ -684,12 +684,20 @@ const mqttClient = mqtt.connect(BROKER, {
   clientId: 'HMI_'+Math.random().toString(16).slice(2,8),
   keepalive: 30, reconnectPeriod: 5000
 });
-const liveW = 104.1;
-const liveS = [52,62,22,72,30,102,92,  40,48,17,54,23,80,66];
-setStatus('connected');
-function feedData() { weight = liveW; sensors = [...liveS]; updateUI(weight, sensors); }
-feedData();
-setInterval(feedData, 200);
+setStatus('connecting');
+mqttClient.on('connect', ()=>{ setStatus('connected'); mqttClient.subscribe(TOPIC); });
+mqttClient.on('message', (t,payload)=>{
+  try {
+    const d=JSON.parse(payload.toString());
+    if(d.s && d.s.length===14){ sensors=[...d.s]; weight=d.w||0; updateUI(weight,sensors); }
+  } catch(e){}
+});
+mqttClient.on('disconnect', ()=>setStatus('disconnected'));
+mqttClient.on('error',      ()=>setStatus('disconnected'));
+mqttClient.on('reconnect',  ()=>setStatus('connecting'));
+
+drawFeet();
+drawScore(0);
 </script>
 </body>
 </html>
