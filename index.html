@@ -325,14 +325,25 @@ const MQTT_PASS = 'Bridge123';
 // Pozitii senzori 
 // x: 0=stanga talpii, 1=dreapta talpii
 // y: 0=degete, 1=calcai
+// Pozitii senzori — x: 0 = marginea STANGA a talpii, 1 = marginea DREAPTA; y: 0 = degete, 1 = calcai
+// Fiecare talpa are propriile coordonate, editabile independent.
 const POS_L = [
   [0.60, 0.12],  // S0  haluce
-  [0.54, 0.18],  // S1  falange 2-3
+  [0.46, 0.18],  // S1  falange 2-3
   [0.55, 0.37],  // S2  arc medial
   [0.30, 0.26],  // S3  metatars I
   [0.38, 0.55],  // S4  arc medial 2
   [0.50, 0.70],  // S5  calcai interior
   [0.50, 0.90],  // S6  calcai exterior
+];
+const POS_R = [
+  [0.40, 0.12],  // S7  (S0 drept) haluce
+  [0.54, 0.18],  // S8  (S1 drept) falange 2-3
+  [0.45, 0.37],  // S9  (S2 drept) arc medial
+  [0.70, 0.26],  // S10 (S3 drept) metatars I
+  [0.62, 0.55],  // S11 (S4 drept) arc medial 2
+  [0.50, 0.70],  // S12 (S5 drept) calcai interior
+  [0.50, 0.90],  // S13 (S6 drept) calcai exterior
 ];
 
 let sensors     = new Array(14).fill(0);
@@ -397,24 +408,23 @@ function drawFeet() {
   const pad=12, gap=20, fw=(W-2*pad-gap)/2, fh=H-2*pad;
 
   [
-    { ox: pad,        mirror: false, vals: sensors.slice(0,7)  },  // picior stang
-    { ox: pad+fw+gap, mirror: true,  vals: sensors.slice(7,14) }   // picior drept — oglindit
-  ].forEach(({ox, mirror, vals}) => {
+    { ox: pad,        mirror: false, pos: POS_L, vals: sensors.slice(0,7)  },  // picior stang
+    { ox: pad+fw+gap, mirror: true,  pos: POS_R, vals: sensors.slice(7,14) }   // picior drept
+  ].forEach(({ox, mirror, pos, vals}) => {
 
-    // contur talpa
+    // contur talpa (doar forma ramane oglindita)
     footPath(fCtx, ox, pad, fw, fh, mirror);
     fCtx.fillStyle='#0a1a0c'; fCtx.fill();
     fCtx.strokeStyle='#1e3a24'; fCtx.lineWidth=1; fCtx.stroke();
 
-    // heatmap — decupat in forma talpii
+    // heatmap
     fCtx.save();
     footPath(fCtx, ox, pad, fw, fh, mirror);
     fCtx.clip();
     vals.forEach((val, i) => {
       if (val < 3) return;
-      const [nx, ny] = POS_L[i];
-      // oglindire pozitie senzor pentru piciorul drept
-      const cx = mirror ? ox + fw - nx*fw : ox + nx*fw;
+      const [nx, ny] = pos[i];
+      const cx = ox + nx*fw;      // pozitie directa, FARA oglindire
       const cy = pad + ny*fh;
       const r  = Math.min(fw, fh) * 0.19;
       const g  = fCtx.createRadialGradient(cx,cy,0, cx,cy,r);
@@ -434,8 +444,8 @@ function drawFeet() {
 
     // bulini senzori
     vals.forEach((val, i) => {
-      const [nx, ny] = POS_L[i];
-      const cx = mirror ? ox + fw - nx*fw : ox + nx*fw;
+      const [nx, ny] = pos[i];
+      const cx = ox + nx*fw;      // pozitie directa, FARA oglindire
       const cy = pad + ny*fh;
       const t  = Math.min(val/80, 1);
       fCtx.fillStyle   = t < 0.05 ? 'rgba(160,160,160,.2)' : heatColor(val) + `,.${3+(6*t)|0})`;
