@@ -325,27 +325,26 @@ const MQTT_PASS = 'Bridge123';
 // Pozitii senzori 
 // x: 0=stanga talpii, 1=dreapta talpii
 // y: 0=degete, 1=calcai
-// ORDER[pozitie] = canalul fizic care se afiseaza in acea pozitie (0..13)
-const ORDER = [0, 8, 12, 3, 4, 9, 6,   7, 1, 13, 10, 5, 2, 11];
-
 // Pozitii senzori — x: 0 = marginea STANGA a talpii, 1 = marginea DREAPTA; y: 0 = degete, 1 = calcai
+// Fiecare talpa are propriile coordonate, editabile independent.
+const ORDER = [0, 8, 12, 3, 4, 9, 6,           7, 1, 13, 10, 5, 2, 11];  // implicit (nemodificat)
 const POS_L = [
-  [0.60, 0.12],  // stanga poz.0  haluce
-  [0.46, 0.18],  // stanga poz.1  falange 2-3
-  [0.55, 0.37],  // stanga poz.2  arc medial
-  [0.30, 0.26],  // stanga poz.3  metatars I
-  [0.38, 0.55],  // stanga poz.4  arc medial 2
-  [0.50, 0.70],  // stanga poz.5  calcai interior
-  [0.50, 0.90],  // stanga poz.6  calcai exterior
+  [0.60, 0.12],  // S0  haluce
+  [0.46, 0.18],  // S1  falange 2-3
+  [0.55, 0.37],  // S2  arc medial
+  [0.30, 0.26],  // S3  metatars I
+  [0.38, 0.55],  // S4  arc medial 2
+  [0.50, 0.70],  // S5  calcai interior
+  [0.50, 0.90],  // S6  calcai exterior
 ];
 const POS_R = [
-  [0.40, 0.12],  // dreapta poz.0  haluce
-  [0.54, 0.18],  // dreapta poz.1  falange 2-3
-  [0.45, 0.37],  // dreapta poz.2  arc medial
-  [0.70, 0.26],  // dreapta poz.3  metatars I
-  [0.62, 0.55],  // dreapta poz.4  arc medial 2
-  [0.50, 0.70],  // dreapta poz.5  calcai interior
-  [0.50, 0.90],  // dreapta poz.6  calcai exterior
+  [0.40, 0.12],  // S7  (S0 drept) haluce
+  [0.54, 0.18],  // S8  (S1 drept) falange 2-3
+  [0.45, 0.37],  // S9  (S2 drept) arc medial
+  [0.70, 0.26],  // S10 (S3 drept) metatars I
+  [0.62, 0.55],  // S11 (S4 drept) arc medial 2
+  [0.50, 0.70],  // S12 (S5 drept) calcai interior
+  [0.50, 0.90],  // S13 (S6 drept) calcai exterior
 ];
 
 let sensors     = new Array(14).fill(0);
@@ -414,12 +413,12 @@ function drawFeet() {
     { ox: pad+fw+gap, mirror: true,  pos: POS_R, vals: sensors.slice(7,14) }   // picior drept
   ].forEach(({ox, mirror, pos, vals}) => {
 
-    // contur talpa
+    // contur talpa (doar forma ramane oglindita)
     footPath(fCtx, ox, pad, fw, fh, mirror);
     fCtx.fillStyle='#0a1a0c'; fCtx.fill();
     fCtx.strokeStyle='#1e3a24'; fCtx.lineWidth=1; fCtx.stroke();
 
-    // heatmap — decupat in forma talpii
+    // heatmap
     fCtx.save();
     footPath(fCtx, ox, pad, fw, fh, mirror);
     fCtx.clip();
@@ -720,7 +719,7 @@ mqttClient.on('message', (t,payload)=>{
       sensors = ORDER.map(idx => raw[idx]);   // reordoneaza dupa ORDER
       weight  = d.w || 0;
       updateUI(weight, sensors);
-    }
+  }
   } catch(e){}
 });
 mqttClient.on('disconnect', ()=>setStatus('disconnected'));
@@ -732,3 +731,4 @@ drawScore(0);
 </script>
 </body>
 </html>
+
