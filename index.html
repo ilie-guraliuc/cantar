@@ -283,14 +283,14 @@ html, body {
       <canvas id="scoreCanvas" width="86" height="86"></canvas>
       <div class="score-info">
         <div class="score-lbl">SCOR SĂNĂTATE</div>
-        <div class="score-txt" id="scoreTxt">conexiune esp32 lipsa</div>
+        <div class="score-txt" id="scoreTxt">Apăsați «START ANALIZĂ» pentru diagnostic</div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-label">REZULTAT DIAGNOSTIC</div>
       <div class="diag-list" id="diagList">
-        <div class="diag-item">conexiune esp32 lipsa...</div>
+        <div class="diag-item">Urcați pe cântar și apăsați «START ANALIZĂ».</div>
       </div>
     </div>
 
@@ -332,7 +332,7 @@ const POS_L = [
   [0.30, 0.26],  // S3  metatars I
   [0.38, 0.55],  // S4  arc medial 2
   [0.50, 0.70],  // S5  calcai interior
-  [0.50, 0.90],  // S6  calcai exterior (ABSENT)
+  [0.50, 0.90],  // S6  calcai exterior
 ];
 
 let sensors     = new Array(14).fill(0);
@@ -532,30 +532,34 @@ function runDiagnostic(s) {
   };
 }
 
+// ── LIVE: doar greutatea si heatmap-ul (diagnosticul NU se afiseaza aici) ──
 function updateUI(w, s) {
-  const wEl=document.getElementById('weightVal');
-  wEl.innerHTML=(w>0?w.toFixed(1):'—')+'<span class="weight-unit">kg</span>';
-  const d=runDiagnostic(s);
+  const wEl = document.getElementById('weightVal');
+  wEl.innerHTML = (w > 0 ? w.toFixed(1) : '—') + '<span class="weight-unit">kg</span>';
 
-  document.getElementById('pmaxVal').textContent=d.pmax;
-  document.getElementById('pmaxVal').style.color=d.pmax>200?'var(--red)':d.pmax>140?'var(--yellow)':'var(--green)';
-  document.getElementById('asymVal').textContent=d.asym.toFixed(0)+'%';
-  document.getElementById('asymVal').style.color=d.asym>20?'var(--red)':d.asym>10?'var(--yellow)':'var(--green)';
-  document.getElementById('balVal').textContent=d.balance;
-  document.getElementById('postVal').textContent=d.posture;
-  document.getElementById('postVal').style.color=d.posture==='Neutru'?'var(--green)':'var(--yellow)';
+  drawFeet();
+
+  if (isAnalyzing) analysisData.push([...s]);
+}
+
+// ── Afiseaza diagnosticul — apelata DOAR la finalul analizei ──
+function showDiagnostic(d) {
+  document.getElementById('pmaxVal').textContent = d.pmax;
+  document.getElementById('pmaxVal').style.color = d.pmax>200?'var(--red)':d.pmax>140?'var(--yellow)':'var(--green)';
+  document.getElementById('asymVal').textContent = d.asym.toFixed(0)+'%';
+  document.getElementById('asymVal').style.color = d.asym>20?'var(--red)':d.asym>10?'var(--yellow)':'var(--green)';
+  document.getElementById('balVal').textContent = d.balance;
+  document.getElementById('postVal').textContent = d.posture;
+  document.getElementById('postVal').style.color = d.posture==='Neutru'?'var(--green)':'var(--yellow)';
 
   drawScore(d.score);
-  const sc=d.score>=70?'#3fb950':d.score>=40?'#d29922':'#f85149';
-  document.getElementById('scoreTxt').innerHTML=
+  const sc = d.score>=70?'#3fb950':d.score>=40?'#d29922':'#f85149';
+  document.getElementById('scoreTxt').innerHTML =
     `<span style="color:${sc};font-size:18px;font-weight:bold">${d.score}/100</span><br>`+
     (d.score>=70?'Postură bună':d.score>=40?'Necesită atenție':'Consultați un specialist');
 
-  document.getElementById('diagList').innerHTML=d.lines.map(l=>
+  document.getElementById('diagList').innerHTML = d.lines.map(l=>
     `<div class="diag-item ${l.t}">${l.m}</div>`).join('');
-
-  drawFeet();
-  if(isAnalyzing) analysisData.push([...s]);
 }
 
 function toggleAnalysis() {
@@ -575,6 +579,14 @@ function startAnalysis() {
   document.getElementById('btnExport').classList.remove('ready');
   document.getElementById('progFill').style.width = '0%';
 
+  // curata panoul de diagnostic pe durata analizei
+  document.getElementById('diagList').innerHTML =
+    '<div class="diag-item">Se colectează date… nu coborâți de pe cântar.</div>';
+  document.getElementById('scoreTxt').textContent = 'Analiză în curs…';
+  ['pmaxVal','asymVal','balVal','postVal'].forEach(id =>
+    document.getElementById(id).textContent = '—');
+  drawScore(0);
+
   analyzeTimer = setInterval(()=>{
     timerCount--;
     const pct = ((dur-timerCount)/dur*100).toFixed(1);
@@ -593,6 +605,7 @@ function stopAnalysis() {
   if(analysisData.length < 3) {
     document.getElementById('diagList').innerHTML =
       '<div class="diag-item warn">Eroare colectare date!</div>';
+    document.getElementById('scoreTxt').textContent = 'Analiză eșuată';
     return;
   }
 
@@ -602,11 +615,12 @@ function stopAnalysis() {
   if(avg.reduce((a,b)=>a+b,0)<10){
     document.getElementById('diagList').innerHTML =
       '<div class="diag-item warn">⚠ Presiune insuficientă. Stați pe cântar în timpul sesiunii.</div>';
+    document.getElementById('scoreTxt').textContent = 'Fără date suficiente';
     return;
   }
 
   const d = runDiagnostic(avg);
-  drawScore(d.score);
+  showDiagnostic(d);   // ← diagnosticul apare abia acum, pe media citirilor
 
   const entry = {
     date: new Date().toLocaleString('ro-RO'),
@@ -701,3 +715,4 @@ drawScore(0);
 </script>
 </body>
 </html>
+
