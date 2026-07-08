@@ -555,7 +555,7 @@ function updateUI(w, s) {
 
 // ── Afiseaza diagnosticul — apelata DOAR la finalul analizei ──
 function showDiagnostic(d) {
-  document.getElementById('pmaxVal').textContent = d.pmax;
+  document.getElementById('pmaxVal').textContent = Math.round(d.pmax);
   document.getElementById('pmaxVal').style.color = d.pmax>200?'var(--red)':d.pmax>140?'var(--yellow)':'var(--green)';
   document.getElementById('asymVal').textContent = d.asym.toFixed(0)+'%';
   document.getElementById('asymVal').style.color = d.asym>20?'var(--red)':d.asym>10?'var(--yellow)':'var(--green)';
